@@ -7,11 +7,152 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../static/css/style.css"">
-    <title>Document</title>
+    <title>Suguru Solver</title>
 </head>
-<body>
+<body class="bg-slate-700">
+
     <div class="mx-auto bg-pink-400 text-cyan-200 w-fit p-6 rounded-tl-md rounded-br-md my-6">
         Hello World
     </div>
+
+    <div id="grid"></div>
+
+    <button id="mergeRegionButton" class="block mx-auto bg-pink-600 text-white w-fit p-6 rounded-tl-md rounded-br-md my-6">
+        <p>Merge Region</p>
+    </button>
+
+    <script>
+        const m = 3, n = 3;
+        const BASE_CELL_MARGIN_LENGTH = 8, BASE_CELL_WH_SIZE = 192; // in pixel
+
+        class DisjointSet {
+            constructor() {
+                this.parent = Array.from({length: m*n + 1}, (_, i) => i);
+                this.size = Array.from({length: m*n + 1}, (_, i) => 1);
+            }
+
+            reset() {
+                this.parent = Array.from({length: m*n + 1}, (_, i) => i);
+                this.size = Array.from({length: m*n + 1}, (_, i) => 1);
+            }
+
+            find(x) {
+                if (this.parent[x] == x)
+                    return x;
+                this.parent[x] = this.find(this.parent[x]);
+                return this.parent[x];
+            }
+
+            union(x, y) {
+                x = this.find(x);
+                y = this.find(y);
+
+                if (x !== y) {
+                    if (this.size[x] < this.size[y])
+                        [x, y] = [y, x];
+                    this.size[x] += this.size[y];
+                    this.size[y] = 0;
+                    this.parent[y] = x;
+                }
+            }
+        }
+
+        const cellOrder = (i, j) => (i-1)*m + j;
+        const toCell = (order) => [Math.ceil(order/n), ((order-1) % n) + 1];
+        const insideGrid = (i, j) => (1 <= i && i <= m && 1 <= j && j <= n);
+        const isAdjacent = ([i, j], [x, y]) => (Math.abs(i-x) <= 1 && Math.abs(j-y) <= 1 && Math.abs(i-x) + Math.abs(j-y) == 1);
+        const regionDsu = new DisjointSet();
+
+        const createElementWithStyles = (elementType, [...styles]) => {
+            const element = document.createElement(elementType);
+            styles.forEach((style) => {
+                element.classList.add(style);
+            });
+            return element;
+        }
+
+        // border-b-[4px] border-t-[4px] border-r-[4px] border-l-[4px] 
+        const createCell = (i, j) => {
+            const cell = createElementWithStyles('div', ['bg-white', 'border-gray-600', 'cell', 'flex', 'justify-center', 'items-center']);
+            cell.id = `c${cellOrder(i, j)}`;
+            cell.style.width = `${BASE_CELL_WH_SIZE}px`;
+            cell.style.height = `${BASE_CELL_WH_SIZE}px`;
+
+            [[1, 0, 'b'], [-1, 0, 't'], [0, 1, 'r'], [0, -1, 'l']].forEach(([dx, dy, dir]) => {
+                if (insideGrid(i + dx, j + dy))
+                    cell.classList.add(`border-${dir}-[4px]`);
+            });
+
+            const child = createElementWithStyles('p', ['text-5xl', 'flex', 'justify-center', 'items-center']);
+            child.contentEditable = true;
+            child.style.width = `${Math.floor(BASE_CELL_WH_SIZE/2)}px`;
+            child.style.height = `${Math.floor(BASE_CELL_WH_SIZE/2)}px`;
+
+            cell.appendChild(child);
+
+            return cell;
+        }
+
+        // border-b-gray-300 border-t-gray-300 border-r-gray-300 border-l-gray-300
+        const mergeCellRegion = ([i, j], [x, y]) => {
+            regionDsu.union(cellOrder(i, j), cellOrder(x, y));
+            [[i, j], [x, y]].forEach(([p, q]) => {
+                [[1, 0, 'b', 't'], [-1, 0, 't', 'b'], [0, 1, 'r', 'l'], [0, -1, 'l', 'r']].forEach(([dx, dy, dirA, dirB]) => {
+                    if (insideGrid(p + dx, q + dy) && regionDsu.find(cellOrder(p, q)) == regionDsu.find(cellOrder(p + dx, q + dy))) {
+                        document.querySelector(`#c${cellOrder(p, q)}`).classList.add(`border-${dirA}-gray-300`);
+                        document.querySelector(`#c${cellOrder(p + dx, q + dy)}`).classList.add(`border-${dirB}-gray-300`);
+                    }
+                });
+            });
+        }
+
+        const initializeEmptyGrid = () => {
+            const grid = document.querySelector('#grid');
+            grid.innerHTML = '';
+            grid.className = 'bg-gray-900 flex flex-wrap mx-auto h-fit';
+            grid.style.width = `${BASE_CELL_WH_SIZE*n}px`
+
+            for (let i = 1; i <= m; i++)
+                for (let j = 1; j <= n; j++)
+                    grid.appendChild(createCell(i, j));
+        }
+    
+        // Events
+        const action = {id: -1, lastCellClicked: [-1, -1]};
+
+        const initializeEvents = () => {
+            document.querySelector('#mergeRegionButton').addEventListener("click", (event) => {
+                action.id = 1;
+                // document.querySelectorAll(".cell").forEach((element) => {
+                //     element.querySelector('p').contentEditable = false;
+                // });
+            });
+
+            document.querySelectorAll(".cell").forEach((element) => {
+                element.addEventListener("click", (event) => {
+                    if (action.id != 1)
+                        return;
+
+                    const {id, lastCellClicked} = action;
+                    const [i, j] = toCell(parseInt(event.target.id.substring(1)));
+
+                    if (JSON.stringify(lastCellClicked) == JSON.stringify([-1, -1]) || !isAdjacent(lastCellClicked, [i, j])) {
+                        action.lastCellClicked = [i, j];
+                        return;
+                    }
+                    
+                    mergeCellRegion(lastCellClicked, [i, j]);
+                    action.lastCellClicked = [i, j];
+                });
+
+                element.addEventListener('dblclick', (event) => {
+                });
+            });
+        }
+
+
+        initializeEmptyGrid();
+        initializeEvents();
+    </script>
 </body>
 </html>
