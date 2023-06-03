@@ -22,46 +22,15 @@
     </button>
 
     <script>
-        const m = 3, n = 3;
+        const m = 4, n = 4;
         const BASE_CELL_MARGIN_LENGTH = 8, BASE_CELL_WH_SIZE = 192; // in pixel
-
-        class DisjointSet {
-            constructor() {
-                this.parent = Array.from({length: m*n + 1}, (_, i) => i);
-                this.size = Array.from({length: m*n + 1}, (_, i) => 1);
-            }
-
-            reset() {
-                this.parent = Array.from({length: m*n + 1}, (_, i) => i);
-                this.size = Array.from({length: m*n + 1}, (_, i) => 1);
-            }
-
-            find(x) {
-                if (this.parent[x] == x)
-                    return x;
-                this.parent[x] = this.find(this.parent[x]);
-                return this.parent[x];
-            }
-
-            union(x, y) {
-                x = this.find(x);
-                y = this.find(y);
-
-                if (x !== y) {
-                    if (this.size[x] < this.size[y])
-                        [x, y] = [y, x];
-                    this.size[x] += this.size[y];
-                    this.size[y] = 0;
-                    this.parent[y] = x;
-                }
-            }
-        }
+        const action = {id: -1, regionCounter: 0, isCursorDragging: false};
+        const cellRegion = Array.from({length: m*n + 1}, (_, i) => 0);
 
         const cellOrder = (i, j) => (i-1)*m + j;
         const toCell = (order) => [Math.ceil(order/n), ((order-1) % n) + 1];
         const insideGrid = (i, j) => (1 <= i && i <= m && 1 <= j && j <= n);
         const isAdjacent = ([i, j], [x, y]) => (Math.abs(i-x) <= 1 && Math.abs(j-y) <= 1 && Math.abs(i-x) + Math.abs(j-y) == 1);
-        const regionDsu = new DisjointSet();
 
         const createElementWithStyles = (elementType, [...styles]) => {
             const element = document.createElement(elementType);
@@ -87,23 +56,28 @@
             child.contentEditable = true;
             child.style.width = `${Math.floor(BASE_CELL_WH_SIZE/2)}px`;
             child.style.height = `${Math.floor(BASE_CELL_WH_SIZE/2)}px`;
-
             cell.appendChild(child);
 
             return cell;
         }
 
         // border-b-gray-300 border-t-gray-300 border-r-gray-300 border-l-gray-300
-        const mergeCellRegion = ([i, j], [x, y]) => {
-            regionDsu.union(cellOrder(i, j), cellOrder(x, y));
-            [[i, j], [x, y]].forEach(([p, q]) => {
-                [[1, 0, 'b', 't'], [-1, 0, 't', 'b'], [0, 1, 'r', 'l'], [0, -1, 'l', 'r']].forEach(([dx, dy, dirA, dirB]) => {
-                    if (insideGrid(p + dx, q + dy) && regionDsu.find(cellOrder(p, q)) == regionDsu.find(cellOrder(p + dx, q + dy))) {
-                        document.querySelector(`#c${cellOrder(p, q)}`).classList.add(`border-${dirA}-gray-300`);
-                        document.querySelector(`#c${cellOrder(p + dx, q + dy)}`).classList.add(`border-${dirB}-gray-300`);
+        const purgeCellRegion = (i, j) => {
+            [[1, 0, 'b', 't'], [-1, 0, 't', 'b'], [0, 1, 'r', 'l'], [0, -1, 'l', 'r']].forEach(([dx, dy, dirA, dirB]) => {
+                if (insideGrid(i + dx, j + dy))
+                    if (cellRegion[cellOrder(i, j)] == cellRegion[cellOrder(i + dx, j + dy)]) {
+                        document.querySelector(`#c${cellOrder(i, j)}`).classList.add(`border-${dirA}-gray-300`);
+                        document.querySelector(`#c${cellOrder(i + dx, j + dy)}`).classList.add(`border-${dirB}-gray-300`);
+                    } else {
+                        document.querySelector(`#c${cellOrder(i, j)}`).classList.remove(`border-${dirA}-gray-300`);
+                        document.querySelector(`#c${cellOrder(i + dx, j + dy)}`).classList.remove(`border-${dirB}-gray-300`);
                     }
-                });
             });
+        }
+
+        const applyRegionChanges = ([i, j], {regionCounter}) => {
+            cellRegion[cellOrder(i, j)] = regionCounter;
+            purgeCellRegion(i, j);
         }
 
         const initializeEmptyGrid = () => {
@@ -115,38 +89,53 @@
             for (let i = 1; i <= m; i++)
                 for (let j = 1; j <= n; j++)
                     grid.appendChild(createCell(i, j));
+            
+            for (let i = 1; i <= m; i++)
+                for (let j = 1; j <= n; j++)
+                    purgeCellRegion(i, j);            
         }
     
         // Events
-        const action = {id: -1, lastCellClicked: [-1, -1]};
-
         const initializeEvents = () => {
             document.querySelector('#mergeRegionButton').addEventListener("click", (event) => {
-                action.id = 1;
-                // document.querySelectorAll(".cell").forEach((element) => {
-                //     element.querySelector('p').contentEditable = false;
-                // });
+                if (action.id !== 1) {
+                    action.id = 1, action.regionCounter++;
+                    event.target.innerHTML = 'Done Merging Region';
+                }
+                else {
+                    action.id = -1;
+                    event.target.innerHTML = 'Merge New Region';
+                }
+                document.querySelectorAll(".cell").forEach((element) => {
+                    element.querySelector('p').contentEditable = (action.id !== 1);
+                    element.style.userSelect = (action.id !== 1 ? 'auto' : 'none');
+                });
             });
 
             document.querySelectorAll(".cell").forEach((element) => {
-                element.addEventListener("click", (event) => {
-                    if (action.id != 1)
+                element.addEventListener("mousedown", function(event) {
+                    action.isCursorDragging = true;
+                });
+
+                element.addEventListener("mouseup", function(event) {
+                    action.isCursorDragging = false;
+                });
+
+                element.addEventListener("mousemove", function(event) {
+                    if (!action.isCursorDragging || action.id != 1)
                         return;
 
-                    const {id, lastCellClicked} = action;
                     const [i, j] = toCell(parseInt(event.target.id.substring(1)));
-
-                    if (JSON.stringify(lastCellClicked) == JSON.stringify([-1, -1]) || !isAdjacent(lastCellClicked, [i, j])) {
-                        action.lastCellClicked = [i, j];
-                        return;
-                    }
-                    
-                    mergeCellRegion(lastCellClicked, [i, j]);
-                    action.lastCellClicked = [i, j];
+                    applyRegionChanges([i, j], action);
                 });
+            });
 
-                element.addEventListener('dblclick', (event) => {
-                });
+            document.body.addEventListener("mousedown", function(event) {
+                action.isCursorDragging = true;
+            });
+
+            document.body.addEventListener("mouseup", function(event) {
+                action.isCursorDragging = false;
             });
         }
 
