@@ -1,3 +1,4 @@
 *.exe
 venv*
 base.css
+*__pycache__*
