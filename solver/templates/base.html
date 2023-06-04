@@ -377,7 +377,7 @@
             });
 
             document.querySelector('#delRow').addEventListener('click', (event) => {
-                updateExpansion(-1, 0);
+                if (m > 1) updateExpansion(-1, 0);
             });
 
             document.querySelector('#addCol').addEventListener('click', (event) => {
@@ -385,7 +385,7 @@
             });
 
             document.querySelector('#delCol').addEventListener('click', (event) => {
-                updateExpansion(0, -1);
+                if (n > 1) updateExpansion(0, -1);
             });
         }
 
