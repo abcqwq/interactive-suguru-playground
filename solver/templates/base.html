@@ -2,102 +2,228 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <style>
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+        <link rel="stylesheet" href="{% static 'css/style2.css' %}" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&family=Nunito:wght@500&family=Outfit:wght@700&display=swap"
+            rel="stylesheet" />
+        <title>Suguru Solver</title>
+    </head>
+    <body class="bg-gray-50">
+        <div
+            class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center">
+            <div
+                id="modalOverlay"
+                class="absolute w-full h-full bg-gray-900 opacity-50"></div>
+            <div
+                class="modal-container bg-white w-fit mx-auto rounded-sm shadow-lg z-50 overflow-y-auto">
+                <div class="w-fit modal-content py-4 text-left px-6 mx-auto">
+                    <!--Body-->
 
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
-    </style>
-    <title>Suguru Solver</title>
-</head>
-<body>
+                    <p class="text-3xl font-Outfit mx-auto block w-fit">
+                        Goals
+                    </p>
+                    <div class="mt-1 mb-2 mx-5 w-fit">
+                        Fill all cells, while ensuring:
+                        <ul class="list-decimal">
+                            <li>
+                                <span class="font-bold">Rule 1:</span>
+                                no adjacent cells (orthogonally or diagonally)
+                                contain the same number.
+                            </li>
+                            <li>
+                                <span class="font-bold">Rule 2:</span>
+                                no two cells within the same region have the
+                                same number.
+                            </li>
+                            <li>
+                                <span class="font-bold">Rule 3:</span>
+                                each cell contains a number within the range of
+                                1 to the total number of cells in its region.
+                            </li>
+                        </ul>
+                    </div>
 
-    <form id="csrf-token-holder" class="hidden" action="" method="post">
-        {% csrf_token %}
-    </form>
+                    <p class="text-3xl font-Outfit mx-auto block w-fit">
+                        Features
+                    </p>
+                    <div class="mt-1 mx-5 w-fit">
+                        <ul class="list-decimal">
+                            <li>
+                                <span class="font-bold">
+                                    Adjust grid size:
+                                </span>
+                                use the m and n input fields to change the size
+                                of the grid.
+                            </li>
+                            <li>
+                                <span class="font-bold">
+                                    Enable region-drawing:
+                                </span>
+                                click the Draw Region button to activate
+                                region-drawing in the grid.
+                            </li>
+                            <li>
+                                <span class="font-bold">
+                                    Enable cell-filling:
+                                </span>
+                                use the Fill Cell button to allow filling cells
+                                in the grid.
+                            </li>
+                            <li>
+                                <span class="font-bold">
+                                    Validate grid configuration:
+                                </span>
+                                click the Validate button to check if the
+                                current grid configuration is correct.
+                            </li>
+                            <li>
+                                <span class="font-bold">
+                                    Auto-fill remaining cells:
+                                </span>
+                                use the Autocomplete button to automatically
+                                fill all empty cells if a solution exists for
+                                the current grid.
+                            </li>
+                            <li>
+                                <span class="font-bold">
+                                    Clear drawn regions:
+                                </span>
+                                click the Clear Regions button to remove all
+                                drawn regions from the grid.
+                            </li>
+                            <li>
+                                <span class="font-bold">
+                                    Empty all cells:
+                                </span>
+                                use the Clear Cells button to empty all the
+                                cells in the grid.
+                            </li>
+                            <li>
+                                <span class="font-bold"> Randomize grid: </span>
+                                click the Random button to generate a random
+                                grid instance out of 180 possible instances
+                                taken from
+                                <a
+                                    class="font-bold underline"
+                                    href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                                    >janko</a
+                                >.
+                            </li>
+                        </ul>
+                    </div>
 
-    <div class="text-2xl mx-auto bg-teal-500 text-white w-fit p-6 rounded-tl-md rounded-br-md my-6">
-        Suguru Solver
-    </div>
-
-    <div class="w-fit flex font-mono text-md mx-auto">
-        <button id="drawRegionButton" class="block mx-auto bg-teal-500 text-white w-48 px-5 py-3 rounded-tl-md rounded-br-md mb-6">
-            <p>Draw Region</p>
-        </button>
-
-        <button id="fillCellButton" class="block mx-auto bg-teal-500 text-white w-48 px-5 py-3 rounded-tl-md rounded-br-md mb-6">
-            <p>Fill Cell</p>
-        </button>
-
-        <button id="validateButton" class="block mx-auto bg-teal-500 text-white w-48 px-5 py-3 rounded-tl-md rounded-br-md mb-6">
-            <p>Validate</p>
-        </button>
-
-        <button id="solveButton" class="block mx-auto bg-teal-500 text-white w-48 px-5 py-3 rounded-tl-md rounded-br-md mb-6">
-            <p>Magic!</p>
-        </button>
-
-        <button id="clearRegionsButton" class="block mx-auto bg-red-400 text-white w-48 px-5 py-3 rounded-tl-md rounded-br-md mb-6">
-            <p>Clear Regions</p>
-        </button>
-
-        <button id="clearCellsButton" class="block mx-auto bg-red-400 text-white w-48 px-5 py-3 rounded-tl-md rounded-br-md mb-6">
-            <p>Clear Cells</p>
-        </button>
-    </div>
-
-    <div class="w-fit mx-auto">
-        <div class="flex">
-            <div class="mr-6 font-mono text-xl">
-                <div id="navi" class="font-sans bg-white px-5 py-6 mb-6 text-left w-60 h-56 overflow-auto no-scrollbar flex rounded-bl-md rounded-tr-md">
-                    <p>Hello! I'll assist you in using the Solver.</p>
+                    <div class="flex justify-end pt-2">
+                        <button
+                            id="closeModal"
+                            class="bg-slate-700 py-1 px-2 rounded-sm text-white hover:bg-slate-900">
+                            Close
+                        </button>
+                    </div>
                 </div>
-
-                <button class="block mx-auto bg-sky-400 text-white w-60 px-5 py-3 rounded-tl-md rounded-br-md mb-2">
-                    <p>Row</p>
-                </button>
-
-                <div class="flex mb-3">
-                    <button id="addRow" class="block mx-auto bg-sky-500 text-white w-28 px-5 py-3 rounded-tl-md rounded-br-md">
-                        <p>Expand</p>
-                    </button>
-    
-                    <button id="delRow" class="block mx-auto bg-sky-500 text-white w-28 px-5 py-3 rounded-tl-md rounded-br-md">
-                        <p>Shrink</p>
-                    </button>
-                </div>
-
-                <button class="block mx-auto bg-sky-400 text-white w-60 px-5 py-3 rounded-tl-md rounded-br-md mb-2">
-                    <p>Column</p>
-                </button>
-
-                <div class="flex">
-                    <button id="addCol" class="block mx-auto bg-sky-500 text-white w-28 px-5 py-3 rounded-tl-md rounded-br-md mb-6">
-                        <p>Expand</p>
-                    </button>
-    
-                    <button id="delCol" class="block mx-auto bg-sky-500 text-white w-28 px-5 py-3 rounded-tl-md rounded-br-md mb-6">
-                        <p>Shrink</p>
-                    </button>
-                </div>
-
             </div>
-            <div id="grid"></div>
-            
         </div>
-    </div>
 
-    <script src="{% static 'js/main.js' %}"></script>
-</body>
+        <div class="mx-auto w-fit mt-6 text-5xl font-Outfit">
+            <div class="flex">
+                Suguru/
+                <p class="font-Noto">ナンバーブロック</p>
+            </div>
+            <div class="text-center overline">Playground</div>
+        </div>
+
+        <form id="csrf-token-holder" class="hidden" action="" method="post">
+            {% csrf_token %}
+        </form>
+
+        <div class="toast">
+            <span class="message"></span>
+        </div>
+
+        <div class="flex mt-5 w-fit mx-auto font-Nunito text-white">
+            <div class="bg-slate-700 px-2 py-2 rounded-tl-sm rounded-bl-sm">
+                <label for="m">m: </label>
+                <input
+                    type="number"
+                    id="m"
+                    min="1"
+                    max="30"
+                    value="5"
+                    class="text-input inline-block w-10 text-black" />
+            </div>
+            <div class="bg-slate-700 px-2 py-2 rounded-tr-sm rounded-br-sm">
+                <label for="n">n: </label>
+                <input
+                    type="number"
+                    id="n"
+                    min="1"
+                    max="30"
+                    value="5"
+                    class="text-input inline-block w-10 text-black" />
+            </div>
+            <button
+                id="modalButton"
+                class="shadow-sm text-slate-600 font-Nunito bg-slate-200 hover:bg-slate-300 w-fit px-2 py-1 rounded-sm mx-2">
+                Guide
+            </button>
+        </div>
+
+        <div class="w-fit flex font-sans text-md mx-auto my-6">
+            <button id="drawRegionButton">
+                <p>Draw Region</p>
+            </button>
+
+            <button id="fillCellButton">
+                <p>Fill Cell</p>
+            </button>
+
+            <button id="validateButton">
+                <p>Validate</p>
+            </button>
+
+            <button id="solveButton">
+                <p>Autocomplete</p>
+            </button>
+
+            <div role="status" id="promise-loading" class="hidden">
+                <svg
+                    aria-hidden="true"
+                    class="w-8 h-8 mr-2 text-gray-200 animate-spin fill-slate-800"
+                    viewBox="0 0 100 101"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                        fill="currentColor" />
+                    <path
+                        d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                        fill="currentFill" />
+                </svg>
+                <span class="sr-only">Loading...</span>
+            </div>
+
+            <div>|</div>
+
+            <button id="clearRegionsButton">
+                <p>Clear Regions</p>
+            </button>
+
+            <button id="clearCellsButton">
+                <p>Clear Cells</p>
+            </button>
+
+            <button id="randomizeGrid">
+                <p>Random</p>
+            </button>
+        </div>
+
+        <div class="w-fit mx-auto">
+            <div id="grid" class="grid"></div>
+        </div>
+        <script src="{% static 'js/main.js' %}"></script>
+    </body>
 </html>

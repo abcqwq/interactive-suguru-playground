@@ -51,12 +51,34 @@ def hint_constraint():
                 constraint.append([g(i, j, hint[i][j])])
     return constraint
 
+def clean_region():
+    queue = []
+    is_visited = [[False for c in range(n)] for r in range(m)]
+    region_counter = 1
+
+    def bfs(reg):
+        while len(queue) > 0:
+            [i, j] = queue.pop()
+            is_visited[i][j] = True
+            region[i][j] = region_counter
+            for [dx, dy] in [[1, 0], [-1, 0], [0, 1], [0, -1]]:
+                if inside_grid(i+dx, j+dy) and region[i+dx][j+dy] == reg and not is_visited[i+dx][j+dy]:
+                    queue.append([i+dx, j+dy])
+
+    for i in range(m):
+        for j in range(n):
+            if not is_visited[i][j]:
+                queue.append([i, j])
+                bfs(region[i][j])
+                region_counter += 1
+
 def retrieve_data(config):
     global m, n, hint, region, s, s_max
     m = config.get('m')
     n = config.get('n')
     hint = config.get('hint')
     region = config.get('region')
+    clean_region()
     s = [0 for _ in range(max(max(row) for row in region) + 1)]
     for row in region:
         for col in row:
@@ -65,6 +87,8 @@ def retrieve_data(config):
 
 def solve(config):
     retrieve_data(config)
+    if m > 15 or n > 15:
+        return {'solve_status': 'timeout', 'message': 'currently, the solver can only handle up to 15x15 grid (wip)'}
     solver = Glucose3()
     solver.append_formula(phi_1().clauses)
     solver.append_formula(phi_2().clauses)
@@ -73,16 +97,18 @@ def solve(config):
 
     hint = [[-1 for j in range(n)] for i in range(m)]
     solve_status = 'unsolvable'
+    message = 'this puzzle has no solution...'
 
     if solver.solve():
         solve_status = 'solved'
+        message = 'success'
         solution = solver.get_model()
         for i in range(m):
             for j in range(n):
                 for v in range(1, s[region[i][j]] + 1):
                     if g(i, j, v) in solution:
                         hint[i][j] = v
-    return {'hint': hint, 'solve_status': solve_status}
+    return {'hint': hint, 'solve_status': solve_status, 'message': message}
 
 def validate(config):
     retrieve_data(config)
@@ -118,4 +144,4 @@ def validate(config):
         for j in range(n):
             validate_cell(i, j)
 
-    return {'solve_status': 'solved' if len(messages) == 0 else 'unsolved', 'messages': messages}
+    return {'hint': hint, 'solve_status': 'validation_success' if len(messages) == 0 else 'unsolved', 'message': f'there are {len(messages)} constraint(s) not met' if len(messages) > 0 else 'your configuration is correct, well done.'}
