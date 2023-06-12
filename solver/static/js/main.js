@@ -359,7 +359,7 @@ const initializeEvents = () => {
                 }
         }
 
-        document.querySelector('#solveButton').addEventListener('click', () => {
+        document.querySelector('#solveButton').addEventListener('click', async () => {
             disableAllWidget();
             request('/solve')
             .then(response => {
@@ -367,8 +367,8 @@ const initializeEvents = () => {
                     throw new Error('Request failed with status: ' + response.status);
                 }
                 return response.json();
-            }).then(data => {
-                handleResponse(data);
+            }).then(async data => {
+                await handleResponse(data);
             }).finally(() => {
                 enableAllWidget();
             });
@@ -382,8 +382,8 @@ const initializeEvents = () => {
                     throw new Error('Request failed with status: ' + response.status);
                 }
                 return response.json();
-            }).then(data => {
-                handleResponse(data);
+            }).then(async data => {
+                await handleResponse(data);
             }).finally(() => {
                 enableAllWidget();
             });
