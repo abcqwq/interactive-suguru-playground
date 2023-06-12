@@ -9,9 +9,13 @@
         <link rel="stylesheet" href="{% static 'css/style.css' %}" />
         <link rel="stylesheet" href="{% static 'css/style2.css' %}" />
         <link
+            rel="icon"
+            href="{% static 'favicon/favicon.ico' %}"
+            type="image/x-icon" />
+        <link
             href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&family=Nunito:wght@500&family=Outfit:wght@700&display=swap"
             rel="stylesheet" />
-        <title>Suguru Solver</title>
+        <title>Suguru Playground</title>
     </head>
     <body class="bg-gray-50">
         <div
@@ -221,7 +225,7 @@
             </button>
         </div>
 
-        <div class="w-fit mx-auto">
+        <div class="w-fit mx-auto mb-12">
             <div id="grid" class="grid"></div>
         </div>
         <script src="{% static 'js/main.js' %}"></script>

@@ -77,12 +77,27 @@ const initializeEmptyGrid = () => {
     initializeCellEvents();
 }
 
-const getCurrentGridData = () => {
+const getCurrentGridData = async () => {
     const hint = [], region = [];
+    let lastRegionNumber = 0;
+
+    for (let i = 1; i <= m; i++)
+        for (let j = 1; j <= n; j++)
+            lastRegionNumber = Math.max(lastRegionNumber, cellRegion[cellOrder(i, j)]);
+    
+    const regionSize = Array.from({length: lastRegionNumber + 1}, (_, i) => 0);
+
+    for (let i = 1; i <= m; i++)
+        for (let j = 1; j <= n; j++)
+            regionSize[cellRegion[cellOrder(i, j)]]++;
+
     for (let i = 1; i <= m; i++) {
         const currentRegion = [], currentHint = [];
         for (let j = 1; j <= n; j++) {
-            currentHint.push(parseInt(document.querySelector(`#c${cellOrder(i, j)}`).querySelector('p').innerHTML) || 0);
+            const cellElement = document.querySelector(`#c${cellOrder(i, j)}`).querySelector('p');
+            if (cellElement && parseInt(cellElement.innerHTML) > regionSize[cellRegion[cellOrder(i, j)]])
+                cellElement.innerHTML = '', await delay(50);
+            currentHint.push(parseInt(cellElement.innerHTML) || 0);
             currentRegion.push(cellRegion[cellOrder(i, j)]);
         }
         hint.push(currentHint);
@@ -237,6 +252,10 @@ const enableAllWidget = () => {
     document.querySelector('#n').disabled = false;
 }
 
+const delay = (ms) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 const initializeEvents = () => {
 
     const changeOrRevertAction = (selectedActionId) => {
@@ -287,6 +306,8 @@ const initializeEvents = () => {
         document.querySelector('#fillCellButton').addEventListener('click', () => {
             changeOrRevertAction(FILL_CELL_ID);
             document.querySelectorAll(".cell").forEach((element) => {
+                if (element.classList.contains('locked-cell'))
+                    return;
                 element.querySelector('p').contentEditable = (action.id !== -1);
                 element.style.userSelect = (action.id !== -1 ? 'auto' : 'none');
             });
@@ -297,6 +318,7 @@ const initializeEvents = () => {
         document.querySelector('#clearCellsButton').addEventListener('click', () => {
             document.querySelectorAll('.cell').forEach((element) => {
                 element.querySelector('p').innerHTML = '';
+                deleteElementStyles(element.id, ['locked-cell', 'font-bold', 'text-red-500']);
             })
         });
         document.querySelector('#clearRegionsButton').addEventListener('click', () => {
@@ -314,8 +336,12 @@ const initializeEvents = () => {
             initializeEmptyGrid();
             let maxRegion = 0;
             for (let i = 1; i <= m; i++)
-                for (let j = 1; j <= n; j++)
-                    document.querySelector(`#p${cellOrder(i, j)}`).innerHTML = hint[i-1][j-1] || '', applyRegionChanges([i, j], {regionCounter: region[i-1][j-1]}), maxRegion = Math.max(maxRegion, region[i-1][j-1]);
+                for (let j = 1; j <= n; j++) {
+                    document.querySelector(`#p${cellOrder(i, j)}`).innerHTML = hint[i-1][j-1] || '';
+                    applyRegionChanges([i, j], {regionCounter: region[i-1][j-1]}), maxRegion = Math.max(maxRegion, region[i-1][j-1]);
+                    if (hint[i-1][j-1])
+                        addElementStyles(`c${cellOrder(i, j)}`, ['locked-cell', 'font-bold', 'text-red-500']);
+                }
             action.regionCounter = maxRegion + 1;
         });
     }
@@ -334,15 +360,11 @@ const initializeEvents = () => {
     const initializeSolveButtonEvents = () => {
         const csrfToken = document.querySelector('#csrf-token-holder').querySelector('input').value;
 
-        const request = (endpoint) => {
+        const request = async (endpoint) => {
             return fetch(endpoint, 
                 {method: 'POST', 
                 headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
-                body: JSON.stringify(getCurrentGridData())});
-        }
-
-        const delay = (ms) => {
-            return new Promise((resolve) => setTimeout(resolve, ms));
+                body: JSON.stringify(await getCurrentGridData())});
         }
 
         const handleResponse = async(data) => {
@@ -361,7 +383,7 @@ const initializeEvents = () => {
 
         document.querySelector('#solveButton').addEventListener('click', async () => {
             disableAllWidget();
-            request('/solve')
+            await request('/solve')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Request failed with status: ' + response.status);
@@ -374,9 +396,9 @@ const initializeEvents = () => {
             });
         });
     
-        document.querySelector('#validateButton').addEventListener('click', () => {
+        document.querySelector('#validateButton').addEventListener('click', async () => {
             disableAllWidget();
-            request('/validate')
+            await request('/validate')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Request failed with status: ' + response.status);
