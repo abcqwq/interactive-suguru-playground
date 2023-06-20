@@ -73,7 +73,7 @@ def clean_region():
                 region_counter += 1
 
 def retrieve_data(config):
-    global m, n, hint, region, s, s_max
+    global m, n, hint, region, s, s_max, R
     m = config.get('m')
     n = config.get('n')
     hint = config.get('hint')
@@ -84,11 +84,12 @@ def retrieve_data(config):
         for col in row:
             s[col] += 1
     s_max = max(s)
+    R = len(s)-1
 
 def solve(config):
     retrieve_data(config)
-    if m > 15 or n > 15:
-        return {'solve_status': 'timeout', 'message': 'currently, the solver can only handle up to 15x15 grid (wip)'}
+    if m*n > 105:
+        return {'solve_status': 'timeout', 'message': 'currently, the solver can only handle up to 121 cells (wip)'}
     solver = Glucose3()
     solver.append_formula(phi_1().clauses)
     solver.append_formula(phi_2().clauses)
