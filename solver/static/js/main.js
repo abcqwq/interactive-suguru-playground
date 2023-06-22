@@ -158,18 +158,17 @@ const initializeCellEvents = () => {
 }
 
 const showToast = (message) => {
-    const toast = document.querySelector('.toast');
-    toast.querySelector('.message').textContent = message;
-    toast.classList.add('show');
-
+    const toast = document.querySelector('#toast');
+    toast.innerHTML = message;
+    
     setTimeout(() => {
-        toast.classList.remove('show');
+        toast.innerHTML = '';
     }, 3000);
 }
 
 const initializeSelectDropdown = () => {
     const selectContainer = document.querySelector('#dropdown-container');
-    const selectElement = createElementWithStyles('select', ['disabled:pointer-events-none', 'font-Nunito', 'border', 'text-md', 'rounded-tr-md', 'rounded-br-md', 'bg-slate-600', 'hover:bg-slate-700', 'block', 'w-full', 'border-gray-600', 'text-white']);
+    const selectElement = createElementWithStyles('select', ['disabled:pointer-events-none', 'font-Nunito', 'text-md', 'rounded-tr-md', 'rounded-br-md', 'bg-slate-500', 'block', 'w-full', 'text-white', 'hover:bg-slate-700']);
     selectElement.id = 'select-element'
 
     const createOptionElement = (value, text) => {
@@ -192,13 +191,13 @@ const DRAW_REGION_ID = 1, FILL_CELL_ID = 2, SOLVE_ID = 3, VALIDATE_ID = 4;
 const buttonIds = [[DRAW_REGION_ID, 'drawRegionButton'], [FILL_CELL_ID, 'fillCellButton'], [SOLVE_ID, 'solveButton'], [VALIDATE_ID, 'validateButton']];
 const playModeButtonIds = ['fillCellButton', 'validateButton', 'solveButton', 'clearCellsButton'];
 const editModeButtonIds = ['drawRegionButton', 'fillCellButton', 'validateButton', 'solveButton'];
-const disabledButtonStyles = ['bg-slate-800'];
-const enabledButtonStyles = ['bg-slate-600'];
-const initialButtonStyles = ['disabled:pointer-events-none', 'hover:shadow-lg', 'hover:scale-105', 'shadow-sm', 'font-Nunito', 'block', 'bg-slate-600', 'hover:bg-slate-700', 'text-white', 'w-fit', 'px-2', 'py-1', 'rounded-sm'];
+const disabledButtonStyles = ['bg-slate-900'];
+const enabledButtonStyles = ['bg-slate-500'];
+const initialButtonStyles = ['disabled:pointer-events-none', 'hover:shadow-lg', 'hover:scale-105', 'shadow-sm', 'font-Nunito', 'block', 'bg-slate-500', 'hover:bg-slate-700', 'text-white', 'w-fit', 'px-2', 'py-1', 'rounded-sm'];
 
 const specialButtonIds = ['clearRegionsButton', 'clearCellsButton'];
 const initialSpecialButtonStyles = ['disabled:text-white', 'hover:shadow-lg', 'hover:scale-105', 'disabled:pointer-events-none', 'shadow-sm', 'text-slate-600', 'font-Nunito', 'block', 'bg-slate-200', 'hover:bg-slate-300', 'w-fit', 'px-2', 'py-1', 'rounded-sm'];
-const disabledSpecialButtonStyles = ['bg-slate-500'];
+const disabledSpecialButtonStyles = ['bg-slate-900'];
 const enabledSpecialButtonStyles = ['bg-slate-200'];
 
 const showPlayButtons = () => {
@@ -226,15 +225,18 @@ const hideEditButtons = () => {
 }
 
 const showPlayEditButtons = (playMode = true) => {
+    const helperElement = document.querySelector('#mode-helper');
     if (playMode) {
         hideEditButtons();
         showPlayButtons();
         disableGridSizeInput();
+        helperElement.innerHTML = 'you are currently in Play Mode, good luck!'
         return;
     }
     hidePlayButtons();
     showEditButtons();
     enableGridSizeInput();
+    helperElement.innerHTML = 'you are currently in Creative Mode, enjoy customizing the puzzle!'
 }
 
 const initializeButtonStyles = () => {
@@ -293,7 +295,7 @@ const disableGridSizeInput = () => {
 }
 
 const enableGridSizeInput = () => {
-    if (document.querySelector('#switchModeButton').innerHTML.includes('Play')) return;
+    if (!document.querySelector('#switchModeButton').innerHTML.includes('Play')) return;
     document.querySelector('#m').disabled = false;
     document.querySelector('#n').disabled = false;
 }
@@ -301,15 +303,29 @@ const enableGridSizeInput = () => {
 const enableDropdownSelect = () => {
     const selectElement = document.querySelector('#dropdown-container').querySelector('select');
     selectElement.disabled = false;
-    deleteElementStyles(selectElement.id, ['bg-slate-800']);
-    addElementStyles(selectElement.id, ['bg-slate-600']);
+    deleteElementStyles(selectElement.id, ['bg-slate-900']);
+    addElementStyles(selectElement.id, ['bg-slate-500']);
 }
 
 const disableDropdownSelect = () => {
     const selectElement = document.querySelector('#dropdown-container').querySelector('select');
     selectElement.disabled = true;
-    deleteElementStyles(selectElement.id, ['bg-slate-600']);
-    addElementStyles(selectElement.id, ['bg-slate-800']);
+    deleteElementStyles(selectElement.id, ['bg-slate-500']);
+    addElementStyles(selectElement.id, ['bg-slate-900']);
+}
+
+const disableSwitchModeButton = () => {
+    const buttonElement = document.querySelector('#switchModeButton');
+    buttonElement.disabled = true;
+    deleteElementStyles(buttonElement.id, ['bg-slate-500']);
+    addElementStyles(buttonElement.id, ['bg-slate-900']);
+}
+
+const enableSwitchModeButton = () => {
+    const buttonElement = document.querySelector('#switchModeButton');
+    buttonElement.disabled = false;
+    deleteElementStyles(buttonElement.id, ['bg-slate-900']);
+    addElementStyles(buttonElement.id, ['bg-slate-500']);
 }
 
 const disableAllWidget = () => {
@@ -322,6 +338,7 @@ const disableAllWidget = () => {
     document.querySelector('#promise-loading').classList.remove('hidden');
     disableGridSizeInput();
     disableDropdownSelect();
+    disableSwitchModeButton();
 }
 
 const enableAllWidget = () => {
@@ -334,6 +351,7 @@ const enableAllWidget = () => {
     document.querySelector('#promise-loading').classList.add('hidden');
     enableGridSizeInput();
     enableDropdownSelect();
+    enableSwitchModeButton();
 }
 
 const delay = (ms) => {
@@ -355,6 +373,21 @@ const initializeEvents = () => {
                     break;
                 default:
                     naviContainer.innerHTML = '';
+                    break;
+            }
+        }
+
+        const updateButtonHelperText = (actionId) => {
+            const buttonHelper = document.querySelector('#button-helper');
+            switch (actionId) {
+                case DRAW_REGION_ID:
+                    buttonHelper.innerHTML = 're-click the Draw Region button to finish!';
+                    break;
+                case FILL_CELL_ID:
+                    buttonHelper.innerHTML = 're-click the Fill Cell button to finish!';
+                    break;
+                default:
+                    buttonHelper.innerHTML = '';
                     break;
             }
         }
@@ -382,15 +415,16 @@ const initializeEvents = () => {
         else
             enableGridSizeInput(), enableButton('switchModeButton'), enableDropdownSelect();
 
+        updateButtonHelperText(action.id);
         updateNavigationText(action.id);
     }
 
     const initializeSwitchModeButton = () => {
         const switchModeButton = document.querySelector('#switchModeButton');
         switchModeButton.addEventListener('click', () => {
-            const modeNow = switchModeButton.innerHTML.includes('Play') ? 'Edit Grid Mode' : 'Play Mode';
+            const modeNow = switchModeButton.innerHTML.includes('Play') ? 'Enter Creative Mode' : 'Enter Play Mode';
             switchModeButton.innerHTML = modeNow;
-            showPlayEditButtons(switchModeButton.innerHTML.includes('Play'));
+            showPlayEditButtons(!switchModeButton.innerHTML.includes('Play'));
         });
     }
 
@@ -421,7 +455,7 @@ const initializeEvents = () => {
         document.querySelector('#fillCellButton').addEventListener('click', () => {
             changeOrRevertAction(FILL_CELL_ID);
             document.querySelectorAll(".cell").forEach((element) => {
-                if (document.querySelector('#switchModeButton').innerHTML.includes('Play')) {
+                if (!document.querySelector('#switchModeButton').innerHTML.includes('Play')) {
                     if (element.querySelector('p').innerHTML)
                         return;
                 } else {
@@ -439,7 +473,7 @@ const initializeEvents = () => {
     const initializeClearButtonEvents = () => {
         document.querySelector('#clearCellsButton').addEventListener('click', () => {
             document.querySelectorAll('.cell').forEach((element) => {
-                if (document.querySelector('#switchModeButton').innerHTML.includes('Play') && element.classList.contains('locked-cell'))
+                if (!document.querySelector('#switchModeButton').innerHTML.includes('Play') && element.classList.contains('locked-cell'))
                     return;
                 element.querySelector('p').innerHTML = '';
                 deleteElementStyles(element.id, ['locked-cell', 'font-bold', 'text-red-500']);
