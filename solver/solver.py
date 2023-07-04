@@ -89,7 +89,7 @@ def retrieve_data(config):
 def solve(config):
     retrieve_data(config)
     if s_max > 50:
-        return {'solve_status': 'unsolved', 'message': 'to use the solver, a region can only contain up to 50 cells.'}
+        return {'solve_status': 'unsolved', 'message': 'to use the autocomplete feature, a region can only contain up to 50 cells.'}
     solver = Glucose3()
     solver.append_formula(phi_1().clauses)
     solver.append_formula(phi_2().clauses)

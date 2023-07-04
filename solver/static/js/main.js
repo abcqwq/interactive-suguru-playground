@@ -456,7 +456,7 @@ const initializeEvents = () => {
             changeOrRevertAction(FILL_CELL_ID);
             document.querySelectorAll(".cell").forEach((element) => {
                 if (!document.querySelector('#switchModeButton').innerHTML.includes('Play')) {
-                    if (element.querySelector('p').innerHTML)
+                    if (element.querySelector('p').innerHTML && !element.classList.contains('autocompleted'))
                         return;
                 } else {
                     addElementStyles(element.id, ['locked-cell', 'font-bold', 'text-red-500']);
@@ -539,6 +539,8 @@ const initializeEvents = () => {
                 for (let j = 1; j <= n; j++) {
                     const cellElement = document.querySelector(`#c${cellOrder(i, j)}`);
                     cellElement.querySelector('p').innerHTML = `${hint[i-1][j-1]}`;
+                    if (!cellElement.classList.contains('text-red-500'))
+                        cellElement.classList.add('autocompleted');
                     await delay(10);
                 }
         }
