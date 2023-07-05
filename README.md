@@ -1,14 +1,15 @@
-# Suguru Playground App Repository
+# Interactive Suguru Playground App Repository
 
-This repository houses the source code for an interactive web application that allows you to play Suguru puzzles, a captivating pencil-and-paper game created by Naoki Inaba, a renowned Japanese puzzle designer. The app is designed to provide an enjoyable user interface for solving Suguru puzzles.
+This repository houses the source code for an interactive web application that allows you to play Suguru puzzles, a captivating pencil-and-paper game created by Naoki Inaba, a renowned Japanese puzzle designer. 
+The app is designed to provide an enjoyable user interface for solving and customizing Suguru puzzles.
 
 ## Live Demo
 
-You can access the live version of the Suguru Playground app by visiting [https://abcqwq.pythonanywhere.com/](https://abcqwq.pythonanywhere.com/).
+You can access the live version of the Interactive Suguru Playground app by visiting [https://abcqwq.pythonanywhere.com/](https://abcqwq.pythonanywhere.com/).
 
 ## Local Installation
 
-To set up the Suguru Playground app on your local machine, follow these simple steps:
+To set up the Interactive Suguru Playground app on your local machine, follow these simple steps:
 
 1. Clone this repository to your preferred directory using the following command:
 
@@ -36,4 +37,4 @@ To set up the Suguru Playground app on your local machine, follow these simple s
 
 5. Open your preferred web browser and visit [http://localhost:8000](http://localhost:8000) to access the Suguru Playground app.
 
-Now you can enjoy solving Suguru puzzles right from the comfort of your own computer.
+Now you can enjoy solving and customizing Suguru puzzles right from the comfort of your own computer.
